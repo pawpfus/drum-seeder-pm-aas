@@ -37,6 +37,16 @@
   .badge{margin-left:auto;pointer-events:none;font-size:11px;color:var(--muted);
     border:1px solid var(--line);padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.25)}
 
+  /* ---- Switch konfigurasi ---- */
+  .switch{position:absolute;top:16px;right:20px;z-index:7;display:flex;gap:4px;
+    background:rgba(4,16,11,.55);border:1px solid var(--line);border-radius:999px;padding:4px;
+    backdrop-filter:blur(10px);box-shadow:0 8px 26px rgba(0,0,0,.4)}
+  .switch button{border:none;background:transparent;color:var(--muted);font-family:var(--font);
+    font-size:12.5px;font-weight:700;padding:8px 15px;border-radius:999px;cursor:pointer;
+    transition:.18s;white-space:nowrap;letter-spacing:.2px}
+  .switch button:hover{color:var(--text)}
+  .switch button.on{background:linear-gradient(135deg,var(--green2),var(--green));color:#04120b}
+
   /* ---- Legend (component list) ---- */
   .legend{position:absolute;left:20px;bottom:20px;z-index:5;
     background:var(--panel);border:1px solid var(--line);border-radius:16px;
@@ -94,6 +104,8 @@
     .header{padding:12px 14px}
     .title h1{font-size:16px}
     .badge{display:none}
+    .switch{top:54px;right:auto;left:50%;transform:translateX(-50%)}
+    .switch button{font-size:11.5px;padding:7px 13px}
     .hint{font-size:10px;padding:6px 12px;top:56px;bottom:auto;left:50%;
       white-space:normal;max-width:92vw;text-align:center;line-height:1.4}
 
@@ -123,8 +135,13 @@
 
 <div class="header">
   <div class="title">
-    <h1>DRUM SEEDER — <span>PM AAS 6:1</span></h1>
+    <h1>DRUM SEEDER — <span id="cfg-label">PM AAS 6:1</span></h1>
   </div>
+</div>
+
+<div class="switch" id="switch">
+  <button data-cfg="6:1" class="on">PM AAS 6:1</button>
+  <button data-cfg="4:1">Legowo 4:1</button>
 </div>
 
 <div class="legend">
@@ -320,7 +337,7 @@ const parts = [];                 // clickable roots
 function register(group, specKey){
   group.userData.spec = specKey;
   group.userData.home = group.position.clone();
-  group.traverse(o=>{ if(o.isMesh) o.userData.root = group; });
+  group.traverse(o=>{ if(o.isMesh){ o.userData.root = group; o.frustumCulled = false; } });
   parts.push(group);
   scene.add(group);
 }
@@ -376,20 +393,20 @@ function buildCap(x){
 }
 
 // --- Poros / As ---
-function buildAxle(){
+function buildAxle(len,seg){
   const g=new THREE.Group();
-  const shaft=xCyl(1.7,1.7,196,20, M.axle()); g.add(shaft);
-  const centre=xCyl(2.1,2.1,44,20, M.axleC()); g.add(centre); // segmen tengah hitam
+  const shaft=xCyl(1.7,1.7,len,20, M.axle()); g.add(shaft);
+  const centre=xCyl(2.1,2.1,seg,20, M.axleC()); g.add(centre); // segmen tengah hitam
   g.position.set(0,0,0);
   register(g,'poros');
   return g;
 }
 
 // --- Rangka penarik (A-frame) ---
-function buildFrame(){
+function buildFrame(legX){
   const g=new THREE.Group();
   const apex=new THREE.Vector3(0,88,-6);
-  const L=new THREE.Vector3(-96,4,0), R=new THREE.Vector3(96,4,0), C=new THREE.Vector3(0,4,0);
+  const L=new THREE.Vector3(-legX,4,0), R=new THREE.Vector3(legX,4,0), C=new THREE.Vector3(0,4,0);
   g.add(tube(apex,L,2.2,M.frame()));
   g.add(tube(apex,R,2.2,M.frame()));
   g.add(tube(apex,C,1.8,M.frame()));            // tiang tengah
@@ -401,18 +418,17 @@ function buildFrame(){
   return g;
 }
 
-// Layout — pusat tabung: 25/25/50/25/25 cm (simetris), roda +20 cm dari tabung ujung
-const CENTERS = [-75,-50,-25, 25, 50, 75];
-CENTERS.forEach(x=>{ buildDrum(x); buildCap(x-9); buildCap(x+9); });
-buildWheel(-95); buildWheel(95);
-buildAxle();
-buildFrame();
-
-// simpan radius bounding tiap part untuk framing kamera
-parts.forEach(p=>{
-  const b=new THREE.Box3().setFromObject(p);
-  p.userData.radius=b.getBoundingSphere(new THREE.Sphere()).radius;
-});
+// Konfigurasi rangkaian — pusat tabung (cm), posisi roda, panjang poros, spesifikasi dinamis
+const CONFIGS = {
+  '6:1': { label:'PM AAS 6:1', centers:[-75,-50,-25,25,50,75], wheelX:95, axleLen:196, centreSeg:44,
+    tabungQty:'6 unit', tutupQty:'12 unit', jarakBaris:'25 cm (tengah 50 cm)',
+    ratioNote:'Rasio <b>PM-AAS 6:1</b> — enam tabung tanam. Benih yang telah direndam & diperam sebaiknya segera ditanam (≤ 24 jam) agar vigor tetap tinggi.',
+    porosLen:'± 190 cm', porosSeg:'Pemisah jalur (50 cm)', lebarRentang:'± 190 cm', panjangLengan:'± 130 cm' },
+  '4:1': { label:'Legowo 4:1', centers:[-45,-20,20,45], wheelX:65, axleLen:136, centreSeg:36,
+    tabungQty:'4 unit', tutupQty:'8 unit', jarakBaris:'25 cm (lorong 40 cm)',
+    ratioNote:'Jajar <b>legowo 4:1</b> — dua baris tanam tiap sisi dipisah lorong 40 cm. Benih rendam–peram sebaiknya ditanam ≤ 24 jam agar vigor tetap tinggi.',
+    porosLen:'± 130 cm', porosSeg:'Lorong tengah (40 cm)', lebarRentang:'± 130 cm', panjangLengan:'± 110 cm' },
+};
 
 /* =========================================================================
    INTERAKSI — fokus / lepas komponen
@@ -471,6 +487,33 @@ document.querySelectorAll('.legend button').forEach(b=>{
   b.onclick=()=>{ const key=b.dataset.part;
     const p=parts.find(x=>x.userData.spec===key); if(p) focusPart(p); };
 });
+
+// ---- Bangun / ganti konfigurasi rangkaian (6:1 ⇄ Legowo 4:1) ----
+function setRow(spec,label,val){ const r=spec.rows.find(x=>x.l===label); if(r) r.v=val; }
+function buildAssembly(key){
+  const cfg=CONFIGS[key]; if(!cfg) return;
+  // bersihkan part lama
+  parts.forEach(p=>{ scene.remove(p); p.traverse(o=>{ if(o.isMesh){ o.geometry.dispose(); o.material.dispose(); }}); });
+  parts.length=0; focused=null; hovered=null;
+  // bangun ulang sesuai konfigurasi
+  cfg.centers.forEach(x=>{ buildDrum(x); buildCap(x-9); buildCap(x+9); });
+  buildWheel(-cfg.wheelX); buildWheel(cfg.wheelX);
+  buildAxle(cfg.axleLen, cfg.centreSeg);
+  buildFrame(cfg.wheelX+1);
+  parts.forEach(p=>{ const b=new THREE.Box3().setFromObject(p); p.userData.radius=b.getBoundingSphere(new THREE.Sphere()).radius; });
+  // perbarui spesifikasi dinamis
+  SPECS.tabung.qty=cfg.tabungQty; SPECS.tutup.qty=cfg.tutupQty;
+  setRow(SPECS.tabung,'Jarak antar baris',cfg.jarakBaris); SPECS.tabung.note=cfg.ratioNote;
+  setRow(SPECS.poros,'Panjang total',cfg.porosLen); setRow(SPECS.poros,'Segmen tengah',cfg.porosSeg);
+  setRow(SPECS.rangka,'Lebar rentang',cfg.lebarRentang); setRow(SPECS.rangka,'Panjang lengan',cfg.panjangLengan);
+  // UI
+  document.getElementById('cfg-label').textContent=cfg.label;
+  document.querySelectorAll('.switch button').forEach(b=>b.classList.toggle('on', b.dataset.cfg===key));
+  el.spec.classList.remove('open');
+  controlling=false; controls.enabled=true; controls.autoRotate=true;
+}
+document.querySelectorAll('.switch button').forEach(b=>{ b.onclick=()=> buildAssembly(b.dataset.cfg); });
+buildAssembly('6:1');   // konfigurasi awal
 
 // raycast pointer
 const ray=new THREE.Raycaster(), ndc=new THREE.Vector2();
