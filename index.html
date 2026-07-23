@@ -109,15 +109,15 @@
     .hint{font-size:10px;padding:6px 12px;top:56px;bottom:auto;left:50%;
       white-space:normal;max-width:92vw;text-align:center;line-height:1.4}
 
-    /* Legend jadi bilah chip horizontal di bawah */
+    /* Legend jadi chip pil yang membungkus — semua opsi tampil penuh (tanpa scroll) */
     .legend{left:0;right:0;bottom:0;width:auto;border-radius:16px 16px 0 0;border-left:none;border-right:none;border-bottom:none;
-      padding:10px 12px calc(12px + env(safe-area-inset-bottom));
-      display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+      padding:10px 10px calc(12px + env(safe-area-inset-bottom));
+      display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
     .legend h2{display:none}
-    .legend button{flex:0 0 auto;flex-direction:column;gap:5px;min-width:78px;
-      padding:9px 12px;font-size:12px;text-align:center;border:1px solid var(--line);border-radius:12px}
-    .legend button .dot{margin:0 auto}
-    .legend button small{margin:0}
+    .legend button{flex:0 0 auto;width:auto;flex-direction:row;align-items:center;gap:6px;
+      padding:7px 11px;font-size:11.5px;text-align:left;border:1px solid var(--line);border-radius:999px}
+    .legend button .dot{width:9px;height:9px;margin:0}
+    .legend button small{margin-left:1px}
 
     /* Panel spesifikasi jadi bottom-sheet */
     .spec{width:100%;max-width:100%;left:0;right:0;top:auto;bottom:0;height:54vh;max-height:460px;
@@ -146,6 +146,7 @@
 
 <div class="legend">
   <h2>Komponen</h2>
+  <button data-part="roda"><span class="dot" style="background:#2b2b2b"></span>Roda <small>×2</small></button>
   <button data-part="tabung"><span class="dot" style="background:#31b46a"></span>Tabung PVC <small>×6</small></button>
   <button data-part="tutup"><span class="dot" style="background:#6b7280"></span>Tutup Paralon <small>×12</small></button>
   <button data-part="poros"><span class="dot" style="background:#2f7fe0"></span>Poros / As <small>×1</small></button>
@@ -471,9 +472,10 @@ function focusPart(part){
   const r=part.userData.radius;
   const dist=Math.max(90, r*2.9+34);
   const mobile = innerWidth<=640;
-  camGoalPos.set(SHOWCASE.x, SHOWCASE.y+r*0.55+12, SHOWCASE.z+dist);
-  // di mobile: arahkan bidik ke bawah objek agar komponen naik ke separuh atas layar (tidak tertutup bottom-sheet)
-  camGoalTgt.set(SHOWCASE.x, SHOWCASE.y - (mobile ? r*1.15 : 0), SHOWCASE.z);
+  const wc=SHOWCASE.clone().add(part.userData.center||new THREE.Vector3()); // pusat visual objek di panggung
+  camGoalPos.set(wc.x, wc.y + r*0.5 + 10, wc.z + dist);
+  // di mobile: turunkan bidik ~ proporsional jarak agar objek naik ke area atas (di atas bottom-sheet)
+  camGoalTgt.set(wc.x, wc.y - (mobile ? dist*0.22 : 0), wc.z);
 }
 
 function closePart(){
@@ -503,7 +505,9 @@ function buildAssembly(key){
   buildWheel(-cfg.wheelX); buildWheel(cfg.wheelX);
   buildAxle(cfg.axleLen, cfg.centreSeg);
   buildFrame(cfg.wheelX+1);
-  parts.forEach(p=>{ const b=new THREE.Box3().setFromObject(p); p.userData.radius=b.getBoundingSphere(new THREE.Sphere()).radius; });
+  parts.forEach(p=>{ const b=new THREE.Box3().setFromObject(p);
+    p.userData.radius=b.getBoundingSphere(new THREE.Sphere()).radius;
+    p.userData.center=b.getCenter(new THREE.Vector3()).sub(p.position); }); // pusat bbox relatif ke origin grup
   // perbarui spesifikasi dinamis
   SPECS.tabung.qty=cfg.tabungQty; SPECS.tutup.qty=cfg.tutupQty;
   setRow(SPECS.tabung,'Jarak antar baris',cfg.jarakBaris); SPECS.tabung.note=cfg.ratioNote;
