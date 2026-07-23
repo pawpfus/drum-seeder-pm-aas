@@ -135,18 +135,17 @@
 
 <div class="header">
   <div class="title">
-    <h1>DRUM SEEDER — <span id="cfg-label">PM AAS 6:1</span></h1>
+    <h1>DRUM SEEDER — <span>PM AAS</span></h1>
   </div>
 </div>
 
 <div class="switch" id="switch">
-  <button data-cfg="6:1" class="on">PM AAS 6:1</button>
+  <button data-cfg="6:1" class="on">Legowo 6:1</button>
   <button data-cfg="4:1">Legowo 4:1</button>
 </div>
 
 <div class="legend">
   <h2>Komponen</h2>
-  <button data-part="roda"><span class="dot" style="background:#2b2b2b"></span>Roda <small>×2</small></button>
   <button data-part="tabung"><span class="dot" style="background:#31b46a"></span>Tabung PVC <small>×6</small></button>
   <button data-part="tutup"><span class="dot" style="background:#6b7280"></span>Tutup Paralon <small>×12</small></button>
   <button data-part="poros"><span class="dot" style="background:#2f7fe0"></span>Poros / As <small>×1</small></button>
@@ -424,9 +423,9 @@ function buildFrame(legX){
 
 // Konfigurasi rangkaian — pusat tabung (cm), posisi roda, panjang poros, spesifikasi dinamis
 const CONFIGS = {
-  '6:1': { label:'PM AAS 6:1', centers:[-75,-50,-25,25,50,75], wheelX:95, axleLen:196, centreSeg:44,
+  '6:1': { label:'Legowo 6:1', centers:[-75,-50,-25,25,50,75], wheelX:95, axleLen:196, centreSeg:44,
     tabungQty:'6 unit', tutupQty:'12 unit', jarakBaris:'25 cm (tengah 50 cm)',
-    ratioNote:'Rasio <b>PM-AAS 6:1</b> — enam tabung tanam. Benih yang telah direndam & diperam sebaiknya segera ditanam (≤ 24 jam) agar vigor tetap tinggi.',
+    ratioNote:'Jajar <b>legowo 6:1</b> — enam tabung tanam. Benih yang telah direndam & diperam sebaiknya segera ditanam (≤ 24 jam) agar vigor tetap tinggi.',
     porosLen:'± 190 cm', porosSeg:'Pemisah jalur (50 cm)', lebarRentang:'± 190 cm', panjangLengan:'± 130 cm' },
   '4:1': { label:'Legowo 4:1', centers:[-45,-20,20,45], wheelX:65, axleLen:136, centreSeg:36,
     tabungQty:'4 unit', tutupQty:'8 unit', jarakBaris:'25 cm (lorong 40 cm)',
@@ -511,7 +510,6 @@ function buildAssembly(key){
   setRow(SPECS.poros,'Panjang total',cfg.porosLen); setRow(SPECS.poros,'Segmen tengah',cfg.porosSeg);
   setRow(SPECS.rangka,'Lebar rentang',cfg.lebarRentang); setRow(SPECS.rangka,'Panjang lengan',cfg.panjangLengan);
   // UI
-  document.getElementById('cfg-label').textContent=cfg.label;
   document.querySelectorAll('.switch button').forEach(b=>b.classList.toggle('on', b.dataset.cfg===key));
   el.spec.classList.remove('open');
   controlling=false; controls.enabled=true; controls.autoRotate=true;
