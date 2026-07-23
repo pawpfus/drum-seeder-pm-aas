@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Blueprint 3D — Drum Seeder PM AAS 6:1</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#071a14" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Drum Seeder 3D" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<style>
+  :root{
+    --bg0:#071a14; --bg1:#0b2a20; --panel:rgba(9,28,22,.86);
+    --line:rgba(120,220,170,.18); --green:#31b46a; --green2:#7ff0b0;
+    --accent:#ffd54a; --text:#e8fff2; --muted:#8fc7ac; --blue:#2f7fe0;
+    --font:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--bg0);color:var(--text);font-family:var(--font)}
+  #app{position:fixed;inset:0}
+  canvas{display:block;touch-action:none}
+
+  /* ---- Header ---- */
+  .header{position:absolute;top:0;left:0;right:0;padding:16px 20px;
+    display:flex;align-items:center;gap:14px;pointer-events:none;
+    background:linear-gradient(180deg,rgba(3,14,10,.72),transparent);z-index:5}
+  .logo{width:44px;height:44px;border-radius:12px;flex:none;
+    background:radial-gradient(circle at 30% 25%,#ffe07a,#e6b800 55%,#a67c00);
+    display:grid;place-items:center;font-size:22px;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+  .title h1{font-size:19px;font-weight:800;letter-spacing:.5px;line-height:1.1}
+  .title h1 span{color:var(--green2)}
+  .title p{font-size:11.5px;color:var(--muted);letter-spacing:.3px;margin-top:2px}
+  .badge{margin-left:auto;pointer-events:none;font-size:11px;color:var(--muted);
+    border:1px solid var(--line);padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.25)}
+
+  /* ---- Legend (component list) ---- */
+  .legend{position:absolute;left:20px;bottom:20px;z-index:5;
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:12px;backdrop-filter:blur(10px);width:210px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+  .legend h2{font-size:11px;letter-spacing:1.4px;color:var(--muted);text-transform:uppercase;margin-bottom:9px;padding-left:2px}
+  .legend button{display:flex;align-items:center;gap:10px;width:100%;
+    background:transparent;border:1px solid transparent;border-radius:10px;
+    color:var(--text);font-family:var(--font);font-size:13px;padding:8px 9px;cursor:pointer;
+    text-align:left;transition:.16s}
+  .legend button:hover{background:rgba(49,180,106,.14);border-color:var(--line)}
+  .legend button .dot{width:12px;height:12px;border-radius:4px;flex:none;box-shadow:0 0 0 3px rgba(255,255,255,.04)}
+  .legend button small{margin-left:auto;color:var(--muted);font-size:10.5px}
+
+  /* ---- Hint ---- */
+  .hint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);z-index:4;
+    font-size:12px;color:var(--muted);background:rgba(0,0,0,.32);border:1px solid var(--line);
+    padding:8px 16px;border-radius:999px;white-space:nowrap;backdrop-filter:blur(6px)}
+  .hint b{color:var(--green2)}
+
+  /* ---- Spec panel ---- */
+  .spec{position:absolute;top:0;right:0;bottom:0;width:340px;max-width:88vw;z-index:8;
+    background:var(--panel);border-left:1px solid var(--line);backdrop-filter:blur(14px);
+    transform:translateX(105%);transition:transform .42s cubic-bezier(.6,.05,.15,1);
+    display:flex;flex-direction:column;box-shadow:-20px 0 60px rgba(0,0,0,.5)}
+  .spec.open{transform:translateX(0)}
+  .spec .top{padding:22px 22px 16px;border-bottom:1px solid var(--line)}
+  .spec .kicker{font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;font-weight:700}
+  .spec h3{font-size:22px;font-weight:800;margin-top:8px;line-height:1.15}
+  .spec .qty{display:inline-block;margin-top:10px;font-size:11.5px;color:var(--green2);
+    border:1px solid var(--line);padding:4px 10px;border-radius:999px;background:rgba(49,180,106,.1)}
+  .spec .rows{padding:8px 22px 4px;overflow-y:auto;flex:1}
+  .row{display:flex;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px dashed var(--line);align-items:baseline}
+  .row .l{font-size:12.5px;color:var(--muted);flex:none;max-width:46%}
+  .row .v{font-size:14px;font-weight:600;text-align:right;line-height:1.35}
+  .row .v .src{display:block;font-size:9.5px;font-weight:700;letter-spacing:.6px;margin-top:3px}
+  .src.juknis{color:var(--green2)}
+  .src.est{color:var(--accent)}
+  .note{margin:14px 22px 0;font-size:12px;line-height:1.55;color:var(--muted);
+    background:rgba(255,213,74,.07);border:1px solid rgba(255,213,74,.18);border-radius:12px;padding:12px 14px}
+  .note b{color:var(--accent)}
+  .spec .foot{padding:16px 22px 22px}
+  .btnClose{width:100%;padding:13px;border:none;border-radius:12px;cursor:pointer;
+    font-family:var(--font);font-size:14px;font-weight:700;color:#04120b;
+    background:linear-gradient(135deg,var(--green2),var(--green));transition:.18s}
+  .btnClose:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+  .loader{position:absolute;inset:0;z-index:20;display:grid;place-items:center;
+    background:var(--bg0);color:var(--muted);font-size:13px;letter-spacing:1px}
+  .loader.hide{opacity:0;pointer-events:none;transition:opacity .5s}
+  .spin{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--green2);
+    border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 14px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  @media (max-width:640px){
+    .header{padding:12px 14px}
+    .title h1{font-size:16px}
+    .badge{display:none}
+    .hint{font-size:10px;padding:6px 12px;top:56px;bottom:auto;left:50%;
+      white-space:normal;max-width:92vw;text-align:center;line-height:1.4}
+
+    /* Legend jadi bilah chip horizontal di bawah */
+    .legend{left:0;right:0;bottom:0;width:auto;border-radius:16px 16px 0 0;border-left:none;border-right:none;border-bottom:none;
+      padding:10px 12px calc(12px + env(safe-area-inset-bottom));
+      display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .legend h2{display:none}
+    .legend button{flex:0 0 auto;flex-direction:column;gap:5px;min-width:78px;
+      padding:9px 12px;font-size:12px;text-align:center;border:1px solid var(--line);border-radius:12px}
+    .legend button .dot{margin:0 auto}
+    .legend button small{margin:0}
+
+    /* Panel spesifikasi jadi bottom-sheet */
+    .spec{width:100%;max-width:100%;left:0;right:0;top:auto;bottom:0;height:54vh;max-height:460px;
+      border-left:none;border-top:1px solid var(--line);border-radius:20px 20px 0 0;
+      transform:translateY(110%);box-shadow:0 -20px 60px rgba(0,0,0,.55)}
+    .spec.open{transform:translateY(0)}
+    .spec .top{padding:18px 20px 14px}
+    .spec h3{font-size:20px}
+    .spec .foot{padding:14px 20px calc(18px + env(safe-area-inset-bottom))}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="header">
+  <div class="title">
+    <h1>DRUM SEEDER — <span>PM AAS 6:1</span></h1>
+  </div>
+</div>
+
+<div class="legend">
+  <h2>Komponen</h2>
+  <button data-part="roda"><span class="dot" style="background:#2b2b2b"></span>Roda <small>×2</small></button>
+  <button data-part="tabung"><span class="dot" style="background:#31b46a"></span>Tabung PVC <small>×6</small></button>
+  <button data-part="tutup"><span class="dot" style="background:#6b7280"></span>Tutup Paralon <small>×12</small></button>
+  <button data-part="poros"><span class="dot" style="background:#2f7fe0"></span>Poros / As <small>×1</small></button>
+  <button data-part="rangka"><span class="dot" style="background:#1f6fd6"></span>Rangka Penarik <small>×1</small></button>
+</div>
+
+<aside class="spec" id="spec">
+  <div class="top">
+    <div class="kicker" id="s-kicker">Komponen</div>
+    <h3 id="s-title">—</h3>
+    <span class="qty" id="s-qty"></span>
+  </div>
+  <div class="rows" id="s-rows"></div>
+  <div class="note" id="s-note"></div>
+  <div class="foot"><button class="btnClose" id="s-close">✕ Tutup</button></div>
+</aside>
+
+<div class="loader" id="loader"><div><div class="spin"></div>Memuat blueprint 3D…</div></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* =========================================================================
+   DATA SPESIFIKASI (sumber: juknis Drum Seeder PM AAS 6:1 — BRMP)
+   src:'juknis' = angka pasti dari juknis · src:'est' = estimasi/menyesuaikan lapangan
+   ========================================================================= */
+const SPECS = {
+  roda: { kicker:'Penggerak', title:'Roda (Wheel)', qty:'2 unit',
+    rows:[
+      {l:'Lebar roda', v:'5 cm', src:'juknis'},
+      {l:'Diameter', v:'± 34–40 cm', src:'est'},
+      {l:'Bahan', v:'Bekas rangka roda sepeda dimodifikasi'},
+      {l:'Alternatif', v:'Gabus atau lempengan kayu'},
+      {l:'Fungsi', v:'Penggerak & pengatur jarak tanam'},
+    ],
+    note:'Lebar roda & posisi tabung ke roda menyesuaikan ketersediaan di lapangan — <b>dikondisikan agar total menjadi 25 cm</b>.'},
+
+  tabung: { kicker:'Wadah Benih', title:'Tabung Benih (Pipa PVC)', qty:'6 unit',
+    rows:[
+      {l:'Bahan', v:'Pipa PVC paralon putih 4 inch (high quality)'},
+      {l:'Diameter tabung', v:'4 inch (± 10,2 cm)'},
+      {l:'Diameter lubang', v:'1,2 cm', src:'juknis'},
+      {l:'Jarak antar lubang', v:'3 cm', src:'juknis'},
+      {l:'Jarak antar baris', v:'25 cm (tengah 50 cm)', src:'juknis'},
+      {l:'Jarak roda–tabung ujung', v:'20 cm', src:'juknis'},
+    ],
+    note:'Rasio <b>PM-AAS 6:1</b> — enam tabung tanam. Benih yang telah direndam & diperam sebaiknya segera ditanam (≤ 24 jam) agar vigor tetap tinggi.'},
+
+  tutup: { kicker:'Penutup Ujung', title:'Tutup Paralon (Dop)', qty:'12 unit',
+    rows:[
+      {l:'Bahan', v:'Tutup paralon 4 inch'},
+      {l:'Jumlah', v:'2 tutup / tabung (kiri & kanan)'},
+      {l:'Fungsi', v:'Penutup ujung tabung & pintu pengisian benih'},
+      {l:'Modifikasi', v:'Bekas tutup jerigen dipotong sebagian & ditempel'},
+    ],
+    note:''},
+
+  poros: { kicker:'Sumbu Putar', title:'Poros / As', qty:'1 unit',
+    rows:[
+      {l:'Bahan', v:'Pipa besi / as baja'},
+      {l:'Panjang total', v:'± 190 cm', src:'est'},
+      {l:'Fungsi', v:'Sumbu putar & penyatu tabung–roda'},
+      {l:'Segmen tengah', v:'Pemisah jalur (50 cm)'},
+    ],
+    note:'Semua tabung & roda berbagi satu sumbu putar; ketika ditarik, tabung berputar dan benih jatuh melalui lubang.'},
+
+  rangka: { kicker:'Penarik', title:'Rangka Penarik', qty:'1 unit',
+    rows:[
+      {l:'Bahan', v:'Pipa besi'},
+      {l:'Bentuk', v:'Rangka segitiga dengan handle atas'},
+      {l:'Tinggi handle', v:'± 90 cm', src:'est'},
+      {l:'Panjang lengan', v:'± 130 cm', src:'est'},
+      {l:'Lebar rentang', v:'± 190 cm', src:'est'},
+      {l:'Fungsi', v:'Pegangan & penarik alat'},
+    ],
+    note:'Operator menarik alat sambil berjalan di lahan berlumpur; sudut tarik dijaga stabil agar tabung berputar merata.'},
+};
+
+/* =========================================================================
+   SCENE
+   ========================================================================= */
+const app = document.getElementById('app');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#071a14');
+scene.fog = new THREE.Fog('#071a14', 340, 780);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 1, 3000);
+const HOME_CAM = new THREE.Vector3(40, 130, 340);
+const HOME_TGT = new THREE.Vector3(0, 22, 0);
+camera.position.copy(HOME_CAM);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+app.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.copy(HOME_TGT);
+controls.minDistance = 90;
+controls.maxDistance = 620;
+controls.maxPolarAngle = Math.PI*0.52;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+
+// Lights
+scene.add(new THREE.HemisphereLight('#bfffe0', '#0a1f18', 0.85));
+const key = new THREE.DirectionalLight('#ffffff', 1.15);
+key.position.set(120, 220, 160); scene.add(key);
+const rim = new THREE.DirectionalLight('#5fd0ff', 0.5);
+rim.position.set(-160, 90, -120); scene.add(rim);
+
+// Blueprint ground
+const grid = new THREE.GridHelper(900, 60, 0x2fae74, 0x143a2c);
+grid.position.y = -20; grid.material.opacity = 0.5; grid.material.transparent = true;
+scene.add(grid);
+const floor = new THREE.Mesh(
+  new THREE.CircleGeometry(360, 64),
+  new THREE.MeshStandardMaterial({color:'#08201a', roughness:1, metalness:0, transparent:true, opacity:.85}));
+floor.rotation.x = -Math.PI/2; floor.position.y = -20.2; scene.add(floor);
+
+/* =========================================================================
+   MATERIAL & GEOMETRY HELPERS
+   ========================================================================= */
+const mat = (o)=> new THREE.MeshStandardMaterial(Object.assign({transparent:true, opacity:1}, o));
+const M = {
+  tire:  ()=>mat({color:'#232323', roughness:.85, metalness:.15}),
+  rim:   ()=>mat({color:'#8b8f96', roughness:.4,  metalness:.8}),
+  hub:   ()=>mat({color:'#c9ccd2', roughness:.35, metalness:.85}),
+  cap:   ()=>mat({color:'#5f6670', roughness:.6,  metalness:.35}),
+  axle:  ()=>mat({color:'#2f7fe0', roughness:.35, metalness:.7}),
+  axleC: ()=>mat({color:'#111417', roughness:.6,  metalness:.4}),
+  frame: ()=>mat({color:'#1f6fd6', roughness:.35, metalness:.7}),
+  seed:  ()=>mat({color:'#1e56b0', roughness:.5,  metalness:.3}),
+  mark:  ()=>mat({color:'#0a0a0a', roughness:.7}),
+};
+
+// tabung PVC texture: hijau + baris lubang benih + deret baut putih di kedua ujung
+function drumTexture(){
+  const w=1024,h=256, c=document.createElement('canvas'); c.width=w;c.height=h;
+  const g=c.getContext('2d');
+  const grad=g.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,'#3fbf75'); grad.addColorStop(.5,'#2f9e5d'); grad.addColorStop(1,'#26834d');
+  g.fillStyle=grad; g.fillRect(0,0,w,h);
+  // deret baut putih dekat kedua ujung (v kecil & v besar)
+  g.fillStyle='#eafff2';
+  for(const vy of [26, h-26]){
+    for(let i=0;i<26;i++){ const x=(i+.5)*(w/26);
+      g.beginPath(); g.arc(x,vy,4,0,7); g.fill(); }
+  }
+  // dua baris lubang benih (gelap) di tengah — Ø1,2 cm, jarak 3 cm
+  g.fillStyle='#0e2a1c';
+  for(const vy of [h*0.42, h*0.58]){
+    for(let i=0;i<22;i++){ const x=(i+.5)*(w/22);
+      g.beginPath(); g.arc(x,vy,6,0,7); g.fill(); }
+  }
+  const tex=new THREE.CanvasTexture(c);
+  tex.anisotropy=8; return tex;
+}
+const DRUM_TEX = drumTexture();
+
+// cylinder aligned to X axis (default cylinder axis is Y)
+function xCyl(rTop,rBot,len,seg,material){
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(rTop,rBot,len,seg), material);
+  m.rotation.z = Math.PI/2; return m;
+}
+function tube(p1,p2,r,material){
+  const dir=new THREE.Vector3().subVectors(p2,p1); const len=dir.length();
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,16), material);
+  m.position.copy(p1).add(p2).multiplyScalar(.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize());
+  return m;
+}
+
+/* =========================================================================
+   BUILD COMPONENTS
+   ========================================================================= */
+const parts = [];                 // clickable roots
+function register(group, specKey){
+  group.userData.spec = specKey;
+  group.userData.home = group.position.clone();
+  group.traverse(o=>{ if(o.isMesh) o.userData.root = group; });
+  parts.push(group);
+  scene.add(group);
+}
+
+// --- Roda ---
+function buildWheel(x){
+  const g = new THREE.Group();
+  const tire = xCyl(18,18,5,40, M.tire()); g.add(tire);
+  // lug (kembang ban)
+  for(let i=0;i<18;i++){
+    const a=i/18*Math.PI*2;
+    const lug=new THREE.Mesh(new THREE.BoxGeometry(6,3.2,2.4), M.tire());
+    lug.position.set(0, Math.cos(a)*18, Math.sin(a)*18);
+    lug.rotation.x = -a; g.add(lug);
+  }
+  const rimR = xCyl(15,15,5.6,40, M.rim()); g.add(rimR);
+  const hub = xCyl(3.4,3.4,6,20, M.hub()); g.add(hub);
+  for(let i=0;i<6;i++){                     // jari-jari
+    const a=i/6*Math.PI*2;
+    const sp=new THREE.Mesh(new THREE.BoxGeometry(1.6,14,1.6), M.rim());
+    sp.position.set(0, Math.cos(a)*8, Math.sin(a)*8);
+    sp.rotation.x = a; g.add(sp);
+  }
+  g.position.set(x,0,0);
+  register(g,'roda');   // roda bisa diklik langsung di model 3D
+  return g;
+}
+
+// --- Tabung PVC + kap benih ---
+function buildDrum(x){
+  const g=new THREE.Group();
+  const body=xCyl(5.5,5.5,16,48, mat({map:DRUM_TEX, roughness:.55, metalness:.05}));
+  g.add(body);
+  // kap benih biru di atas + penanda hitam
+  const seed=new THREE.Mesh(new THREE.BoxGeometry(7,2.4,4.4), M.seed());
+  seed.position.set(0,5.4,0); g.add(seed);
+  const mk=new THREE.Mesh(new THREE.ConeGeometry(1,1.6,3), M.mark());
+  mk.position.set(0,7,0); g.add(mk);
+  g.position.set(x,0,0);
+  register(g,'tabung');
+  return g;
+}
+
+// --- Tutup paralon (dop) — dua per tabung, tiap dop clickable ---
+function buildCap(x){
+  const g=new THREE.Group();
+  const cap=xCyl(6,6,2,40, M.cap());
+  const lip=xCyl(6.2,6.2,0.7,40, M.cap()); lip.position.x=-0.9;
+  g.add(cap,lip);
+  g.position.set(x,0,0);
+  register(g,'tutup');
+  return g;
+}
+
+// --- Poros / As ---
+function buildAxle(){
+  const g=new THREE.Group();
+  const shaft=xCyl(1.7,1.7,196,20, M.axle()); g.add(shaft);
+  const centre=xCyl(2.1,2.1,44,20, M.axleC()); g.add(centre); // segmen tengah hitam
+  g.position.set(0,0,0);
+  register(g,'poros');
+  return g;
+}
+
+// --- Rangka penarik (A-frame) ---
+function buildFrame(){
+  const g=new THREE.Group();
+  const apex=new THREE.Vector3(0,88,-6);
+  const L=new THREE.Vector3(-96,4,0), R=new THREE.Vector3(96,4,0), C=new THREE.Vector3(0,4,0);
+  g.add(tube(apex,L,2.2,M.frame()));
+  g.add(tube(apex,R,2.2,M.frame()));
+  g.add(tube(apex,C,1.8,M.frame()));            // tiang tengah
+  g.add(tube(new THREE.Vector3(-16,88,-6), new THREE.Vector3(16,88,-6), 2.4, M.frame())); // handle bar
+  // grip
+  const grip=new THREE.Mesh(new THREE.CylinderGeometry(3,3,30,16), M.axleC());
+  grip.rotation.z=Math.PI/2; grip.position.copy(apex); g.add(grip);
+  register(g,'rangka');
+  return g;
+}
+
+// Layout — pusat tabung: 25/25/50/25/25 cm (simetris), roda +20 cm dari tabung ujung
+const CENTERS = [-75,-50,-25, 25, 50, 75];
+CENTERS.forEach(x=>{ buildDrum(x); buildCap(x-9); buildCap(x+9); });
+buildWheel(-95); buildWheel(95);
+buildAxle();
+buildFrame();
+
+// simpan radius bounding tiap part untuk framing kamera
+parts.forEach(p=>{
+  const b=new THREE.Box3().setFromObject(p);
+  p.userData.radius=b.getBoundingSphere(new THREE.Sphere()).radius;
+});
+
+/* =========================================================================
+   INTERAKSI — fokus / lepas komponen
+   ========================================================================= */
+const SHOWCASE = new THREE.Vector3(0,52,70);
+let focused=null, hovered=null;
+let camGoalPos=HOME_CAM.clone(), camGoalTgt=HOME_TGT.clone(), controlling=false;
+const savedPos=new THREE.Vector3(), savedTgt=new THREE.Vector3();
+
+const el = {
+  spec:document.getElementById('spec'),
+  kicker:document.getElementById('s-kicker'),
+  title:document.getElementById('s-title'),
+  qty:document.getElementById('s-qty'),
+  rows:document.getElementById('s-rows'),
+  note:document.getElementById('s-note'),
+};
+
+function fillPanel(key){
+  const s=SPECS[key];
+  el.kicker.textContent=s.kicker; el.title.textContent=s.title; el.qty.textContent=s.qty;
+  el.rows.innerHTML=s.rows.map(r=>{
+    const tag=r.src==='est'? `<span class="src est">● ESTIMASI</span>`:'';
+    return `<div class="row"><div class="l">${r.l}</div><div class="v">${r.v}${tag}</div></div>`;
+  }).join('');
+  el.note.innerHTML=s.note||'';
+  el.note.style.display = s.note ? 'block' : 'none';
+}
+
+function focusPart(part){
+  focused=part;
+  fillPanel(part.userData.spec);
+  el.spec.classList.add('open');
+  controls.autoRotate=false; controls.enabled=false;
+  controlling=true;
+  savedPos.copy(camera.position); savedTgt.copy(controls.target);
+  const r=part.userData.radius;
+  const dist=Math.max(90, r*2.9+34);
+  const mobile = innerWidth<=640;
+  camGoalPos.set(SHOWCASE.x, SHOWCASE.y+r*0.55+12, SHOWCASE.z+dist);
+  // di mobile: arahkan bidik ke bawah objek agar komponen naik ke separuh atas layar (tidak tertutup bottom-sheet)
+  camGoalTgt.set(SHOWCASE.x, SHOWCASE.y - (mobile ? r*1.15 : 0), SHOWCASE.z);
+}
+
+function closePart(){
+  if(!focused) return;
+  focused=null;
+  el.spec.classList.remove('open');
+  controlling=true;
+  camGoalPos.copy(savedPos.lengthSq()?savedPos:HOME_CAM);
+  camGoalTgt.copy(savedTgt.lengthSq()?savedTgt:HOME_TGT);
+}
+
+document.getElementById('s-close').onclick=closePart;
+document.querySelectorAll('.legend button').forEach(b=>{
+  b.onclick=()=>{ const key=b.dataset.part;
+    const p=parts.find(x=>x.userData.spec===key); if(p) focusPart(p); };
+});
+
+// raycast pointer
+const ray=new THREE.Raycaster(), ndc=new THREE.Vector2();
+let downXY=null;
+function setNDC(e){ ndc.x=(e.clientX/innerWidth)*2-1; ndc.y=-(e.clientY/innerHeight)*2+1; }
+
+renderer.domElement.addEventListener('pointerdown',e=>{ downXY={x:e.clientX,y:e.clientY}; });
+renderer.domElement.addEventListener('pointerup',e=>{
+  if(!downXY) return;
+  const moved=Math.hypot(e.clientX-downXY.x, e.clientY-downXY.y); downXY=null;
+  if(moved>6) return;                       // drag, bukan klik
+  if(focused){ closePart(); return; }       // klik saat fokus = tutup
+  setNDC(e); ray.setFromCamera(ndc,camera);
+  const hit=ray.intersectObjects(parts,true)[0];
+  if(hit){ let o=hit.object; while(o && !o.userData.root) o=o.parent;
+    if(o && o.userData.root && o.userData.root.userData.pickable!==false) focusPart(o.userData.root); }
+});
+renderer.domElement.addEventListener('pointermove',e=>{
+  if(focused){ renderer.domElement.style.cursor='pointer'; return; }
+  setNDC(e); ray.setFromCamera(ndc,camera);
+  const hit=ray.intersectObjects(parts,true)[0];
+  let root=null; if(hit){ let o=hit.object; while(o&&!o.userData.root)o=o.parent; root=o; }
+  if(root && root.userData.pickable===false) root=null;
+  if(hovered && hovered!==root) setEmissive(hovered,0);
+  if(root){ setEmissive(root,0.35); hovered=root; renderer.domElement.style.cursor='pointer'; }
+  else { hovered=null; renderer.domElement.style.cursor='grab'; }
+});
+function setEmissive(part,v){
+  part.traverse(o=>{ if(o.isMesh){ o.material.emissive?.setRGB(v*0.15,v*0.5,v*0.3); o.material.emissiveIntensity=1; }});
+}
+
+/* =========================================================================
+   RENDER LOOP
+   ========================================================================= */
+const tmp=new THREE.Vector3();
+function animate(){
+  requestAnimationFrame(animate);
+
+  parts.forEach(p=>{
+    const isSel = p===focused;
+    // opacity: redupkan yang lain saat ada fokus
+    const tOp = (focused===null || isSel) ? 1 : 0.05;
+    // posisi: yang terpilih pindah ke panggung (terlepas dari rakitan)
+    const tPos = isSel ? SHOWCASE : p.userData.home;
+    p.position.lerp(tPos, 0.12);
+    p.traverse(o=>{ if(o.isMesh){ o.material.opacity += (tOp-o.material.opacity)*0.12;
+      o.visible = o.material.opacity>0.02; }});
+    // putar yang terpilih (turntable); kembalikan orientasi saat lepas
+    if(isSel) p.rotation.y += 0.012;
+    else p.rotation.y += (0 - p.rotation.y)*0.15;
+  });
+
+  if(controlling){
+    camera.position.lerp(camGoalPos, 0.08);
+    controls.target.lerp(camGoalTgt, 0.08);
+    if(camera.position.distanceTo(camGoalPos) < 1.4){
+      controlling=false;
+      if(!focused){ controls.enabled=true; controls.autoRotate=true; }
+    }
+  }
+  controls.update();
+  renderer.render(scene,camera);
+}
+animate();
+
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+
+// sembunyikan loader setelah frame pertama
+requestAnimationFrame(()=> setTimeout(()=> document.getElementById('loader').classList.add('hide'), 300));
+
+// PWA — daftarkan service worker (aktif saat di-hosting via http/https)
+if('serviceWorker' in navigator){
+  addEventListener('load',()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
