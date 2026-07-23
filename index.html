@@ -337,7 +337,11 @@ const parts = [];                 // clickable roots
 function register(group, specKey){
   group.userData.spec = specKey;
   group.userData.home = group.position.clone();
-  group.traverse(o=>{ if(o.isMesh){ o.userData.root = group; o.frustumCulled = false; } });
+  group.traverse(o=>{ if(o.isMesh){
+    o.userData.root = group; o.frustumCulled = false;
+    // precompute bounding saat geometry masih valid → cegah rekomputasi NaN transien (raycast/render)
+    o.geometry.computeBoundingBox(); o.geometry.computeBoundingSphere();
+  } });
   parts.push(group);
   scene.add(group);
 }
